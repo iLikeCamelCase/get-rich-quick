@@ -1,19 +1,36 @@
 import numpy as np
 import pandas as pd
-import plotly.graph_objects as go
-from autots import AutoTS
+import torch
+import matplotlib.pyplot as plt
 
-data = pd.read_csv("BTC-USD.csv")
-#print(data.head())
-figure = go.Figure(data=[go.Candlestick(x=data["Date"],
-                                        open=data["Open"], high=data["High"],
-                                        low=data["Low"], close=data["Close"],)])
-figure.update_layout(title = "BTC Price Analysis")
-#figure.show()
-print(data.corr())
+from darts import TimeSeries
+from darts.utils.timeseries_generation import (
+    gaussian_timeseries,
+    linear_timeseries,
+    sine_timeseries,
+)
+from darts.models import (
+    RNNModel,
+    TCNModel,
+    TransformerModel,
+    NBEATSModel,
+    BlockRNNModel,
+)
+from darts.metrics import mape, smape
+from darts.dataprocessing.transformers import Scaler
+from darts.utils.timeseries_generation import datetime_attribute_timeseries
+from darts.datasets import AirPassengersDataset, MonthlyMilkDataset
 
-model = AutoTS(forecast_length=5, frequency='infer', ensemble='simple')
-model = model.fit(data, date_col='Date', value_col='Close', id_col=None)
-prediction = model.predict()
-forecast = prediction.forecast
-print(forecast)
+torch.manual_seed(1)
+np.random.seed(1)
+#import first 3rd of data and convert to panda dataframe
+#pd_data_01 = pd.read_csv("datasets\SPY_sample_5min_04012022.csv", sep=",")
+#import second 3rd of data and convert to panda dataframe
+pd_data_02 = pd.read_csv("datasets\SPY_sample_5min_04042022.csv", sep=",")
+#import thrid 3rd of data and convert to panda dataframe
+pd_data_03 = pd.read_csv("datasets\SPY_sample_5min_04052022.csv", sep=",")
+
+day_01 = TimeSeries.from_csv("datasets\SPY_sample_5min_04012022.csv", time_col="DateTime", value_cols=" Close", fill_missing_dates=True, freq="5T")
+day_01.plot(new_plot=True)
+
+plt.legend()
