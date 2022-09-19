@@ -24,3 +24,5 @@ Given .csv file with historical stock data will train a multitude of time series
 https://unit8co.github.io/darts/
 
 AutoTS [pypi](https://pypi.org/project/AutoTS/)
+
+https://realpython.com/python-mysql/

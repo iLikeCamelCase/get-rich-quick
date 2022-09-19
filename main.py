@@ -29,7 +29,56 @@ from darts.models import (
     BlockRNNModel,
 )
 
+# MySQL connector
+from getpass import getpass
+from mysql.connector import connect, Error
 
+# easier manipulation of csv's
+import csv
+
+def connect_mysql():
+    '''
+    Prompts user for credentials to connect to MySQL server, inputs or extracts data.
+    '''
+    try:
+        with connect(                                   # "with" statement ensures connection terminated if an exception is raised
+            host="localhost",                           # same as try: connect
+            user=input("Enter username: "),             #         finally: close connection
+            password=getpass("Enter password: "),
+            database="historic_intraday",
+        ) as connection:
+            #insert_trading_data_query
+            print(connection)
+    except Error as e:
+        print(e)
+
+def csv_to_list(csv_file):
+    '''
+    Given a csv timeseries dataset will:
+        - fill missing dates
+        - fill NaNs using rudimentary backfill method
+        - convert to a list of tuples
+
+        Parameters: csv_file (str): a string describing the location of csv dataset
+
+        Returns: output (list): csv dataset cleaned up and returned as list of tuples
+    '''
+    # csv to pandas dataframe
+    pd_data_raw = pd.read_csv(csv_file, sep=",")
+    # super simple data preparation to ensure a healthy dataframe
+        # dataframe fill missing dates
+    fixed_date_range = pd.date_range(start=pd_data_raw.at[0, "DateTime"], end=pd_data_raw.at[pd_data_raw.index[-1],"DateTime"])
+    pd_data_raw.reindex(fixed_date_range, fill_value=None)
+        # dataframe backfill NaNs
+    pd_data = pd_data_raw.fillna(method="bfill")
+    # dataframe to list of tuples
+    output = list(pd_data.itertuples(index=False, name=None))
+    return output
+
+
+listy = csv_to_list("datasets\QQQ_intraday_2019.csv")
+print(listy[0:10])
+'''
 torch.manual_seed(1)
 np.random.seed(1)
 #import first 3rd of data and convert to panda dataframe
@@ -90,3 +139,4 @@ pred.plot(label="forecast")
 print(pred.head)
 plt.legend()
 #print("MAPE = {:.2f}%".format(mape(series_01_scaled, pred)))
+'''
