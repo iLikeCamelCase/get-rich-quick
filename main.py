@@ -47,8 +47,35 @@ def connect_mysql():
             password=getpass("Enter password: "),
             database="historic_intraday",
         ) as connection:
-            #insert_trading_data_query
-            print(connection)
+            not_done = True
+            while (not_done):
+                not_done = False
+                path = pathing(input("To input to DB (1)\nTo export from DB (2)"),1,2)
+                if (path == 1):
+                    raw_data = input("Input filepath of raw data (csv)")        # <---- clean this up, it will work if they enter everything correct and only then
+                    listy = csv_to_list(raw_data)
+                    insert_listy_query = """
+                    INSERT INTO intraday_2019 
+                    (datetime, open, high, low, close, volume)
+                    VALUES ( %s, %s, %s, %s, %s, %s) 
+                    """ # do the %s placeholders convert the data to their required datatype? gotta check
+                    with connection.cursor() as cursor:
+                        cursor.executemany(insert_listy_query, listy)
+                        connection.commit()
+
+                elif (path == 2):
+                    # select entire table
+                    select_intraday_query = "SELECT * FROM intraday_2019"
+                    with connection.cursor() as cursor:
+                        cursor.execute(select_intraday_query)
+                        result = cursor.fetchall() # does this fetch indexed data? or does it use the datetime as index? gotta check
+                        fetched_dataframe = pd.DataFrame(result, columns=["datetime", "open", "high", "low", "close", "volume"])
+
+                else:
+                    print("Incorrect input, please input 1 or 2.")
+                    not_done = True
+
+
     except Error as e:
         print(e)
 
@@ -75,9 +102,22 @@ def csv_to_list(csv_file):
     output = list(pd_data.itertuples(index=False, name=None))
     return output
 
+def pathing(test, *integers):
+    '''
+    Checks if test is in integers, if so, returns test, if not returns -1
+    '''
+    
+    x = int(x)
+    for x in integers:
+        if x == test:
+            return x
+    
+    return -1
 
-listy = csv_to_list("datasets\QQQ_intraday_2019.csv")
-print(listy[0:10])
+
+
+
+
 '''
 torch.manual_seed(1)
 np.random.seed(1)

@@ -32,7 +32,6 @@ def connect_mysql():
                 low DECIMAL(10,2)
                 close DECIMAL(10,2)
                 volume INT
-                ticker VARCHAR(5)
             )
             """
             with connection.cursor() as cursor:
