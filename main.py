@@ -39,6 +39,9 @@ import csv
 def connect_mysql():
     '''
     Prompts user for credentials to connect to MySQL server, inputs or extracts data.
+
+        Returns:
+            fetched_datafram (DataFrame) = DataFrame fetched from SQL server
     '''
     try:
         with connect(                                   # "with" statement ensures connection terminated if an exception is raised
@@ -50,7 +53,7 @@ def connect_mysql():
             not_done = True
             while (not_done):
                 not_done = False
-                path = pathing(input("To input to DB (1)\nTo export from DB (2)"),1,2)
+                path = pathing(input("To input to database (1)\nTo export from database (2)"),1,2)
                 if (path == 1):
                     raw_data = input("Input filepath of raw data (csv)")        # <---- clean this up, it will work if they enter everything correct and only then
                     listy = csv_to_list(raw_data)
@@ -70,6 +73,7 @@ def connect_mysql():
                         cursor.execute(select_intraday_query)
                         result = cursor.fetchall() # does this fetch indexed data? or does it use the datetime as index? gotta check
                         fetched_dataframe = pd.DataFrame(result, columns=["datetime", "open", "high", "low", "close", "volume"])
+                        return fetched_dataframe
 
                 else:
                     print("Incorrect input, please input 1 or 2.")
@@ -107,16 +111,62 @@ def pathing(test, *integers):
     Checks if test is in integers, if so, returns test, if not returns -1
     '''
     
-    x = int(x)
+    test = int(test)
     for x in integers:
         if x == test:
-            return x
+            return test
     
     return -1
 
 
 
 
+# let's find out!
+
+def day_model(train, validate):
+    length = 390
+    block_model(train, validate, length)
+    return
+
+def day3_model(train, validate):
+    length = 1170
+    block_model(train, validate, length)
+    return
+
+def week_model(train, validate):
+    length = 2730
+    block_model(train, validate, length)
+    return
+
+def block_model(train, validate, length):
+    model = BlockRNNModel(
+        input_chunk_length=100, output_chunk_length=10, model="RNN"
+    )
+    model.fit([train])
+    pred = model.predict(series = train, n=length)
+    validate.plot(new_plot = True, label = "actual")
+    pred.plot(label = "forecast")
+
+    return
+
+if __name__ == "__main__":
+
+    fetched_dataframe = connect_mysql()
+
+    if (fetched_dataframe is not None):
+        print(fetched_dataframe.head())
+
+    clean_timeseries = TimeSeries.from_dataframe(fetched_dataframe, time_col="datetime", value_cols="close", freq="1T")
+
+    # 3 series to train test models on: 1 day, 3 days, 7 days
+    # how much can my garbage computer handle? how long will it take? how ridiculous will the forecasts be?
+    day_series, day_series_val = clean_timeseries[:390], clean_timeseries[:780]
+    day3_series, day3_series_val = clean_timeseries[:1170], clean_timeseries[:2340]
+    week_series, week_series_val = clean_timeseries[:2730], clean_timeseries[:5460]
+
+    day_model(day_series, day_series_val)
+    day3_model(day3_series, day3_series_val)
+    week_model(week_series, week_series_val)
 
 '''
 torch.manual_seed(1)
@@ -133,7 +183,7 @@ day_01 = TimeSeries.from_csv("datasets\SPY_sample_5min_04012022.csv", time_col="
 day_02 = TimeSeries.from_csv("datasets\SPY_sample_5min_04042022.csv", time_col="DateTime", value_cols=" Close", fill_missing_dates=True, freq="5T")
 day_03 = TimeSeries.from_csv("datasets\SPY_sample_5min_04052022.csv", time_col="DateTime", value_cols=" Close", fill_missing_dates=True, freq="5T")
 val = TimeSeries.from_csv("datasets\QQQ_firstratedatacom1.csv", time_col="DateTime", value_cols=" Close", fill_missing_dates=True, freq="1T")
-"""
+
 day_01.plot(new_plot=True)
 day_02.plot()
 day_03.plot()
@@ -142,14 +192,14 @@ scaler_01, scaler_02, scaler_03 = Scaler(), Scaler(), Scaler()
 series_01_scaled = scaler_01.fit_transform(scaler_01)
 series_02_scaled = scaler_02.fit_transform(scaler_02)
 series_03_scaled = scaler_03.fit_transform(scaler_03)
-"""
+
 
 
 
 transformer = MissingValuesFiller()
 series_01_scaled = transformer.transform(day_01)
 series_02_scaled = transformer.transform(day_02)
-series_03_scaled = transformer.transform(day_03)
+series_03_scaled = transformer.transform(day_03)            DEAD TEST CODE
 val_scaled = transformer.transform(val)
 scaler = MinMaxScaler(feature_range=(0, 1))
 """
